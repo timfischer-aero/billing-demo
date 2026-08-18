@@ -2,5 +2,12 @@
   "name": "training-app-shell",
   "version": "0.0.0",
   "private": true,
-  "scripts": {}
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"pnpm --filter backend start:dev\" \"pnpm --filter frontend dev\"",
+    "build": "pnpm --filter backend build && pnpm --filter frontend build",
+    "test": "pnpm --filter backend test"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
 }
