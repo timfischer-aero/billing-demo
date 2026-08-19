@@ -68,7 +68,6 @@ export default function UserPage() {
           <>
             <p className="mt-1 text-sm text-gray-500">
               The layout {selectedUser.firstName} has saved for the billing worklist.
-              (Placeholder — fills in once view state is wired up.)
             </p>
             <dl className="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200">
               <div className="flex justify-between gap-4 px-4 py-3">
