@@ -1,69 +1,34 @@
-# Training App Shell
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-A monorepo starting point for feature development: a NestJS backend and a Next.js frontend, wired together and ready to build on.
+## Project Outline - Specs for Ideal Competency Project
 
-## Stack
+1. GitHub for apps to live
 
-- **Backend** — NestJS 11 (TypeScript), served under `/api`
-- **Frontend** — Next.js 16 (App Router, TypeScript, Tailwind CSS)
-- **Monorepo** — pnpm workspaces
-- **Node** — 20+ required (22 recommended)
+1. Front-end
 
-## Layout
+    1. Next.js, Typescript
 
-```
-training-app-shell/
-├── apps/
-│   ├── backend/     # NestJS API
-│   └── frontend/    # Next.js app
-├── package.json     # workspace root + scripts
-└── pnpm-workspace.yaml
-```
+    1. Multiple pages to get app router working
 
-## Getting started
+    1. Authentication? Probably not for this demo.
 
-Install dependencies from the repo root (installs both apps):
+    1. Navigation on left
 
-```bash
-pnpm install
-```
+    1. CSS - tailwind, possibly match bill-pay app
 
-Run both apps together:
+    1. Emulate Access / bill app with top area for details, bottom area for table
 
-```bash
-pnpm dev
-```
+    1. Tanstack Table
 
-- Frontend: http://localhost:3000
-- Backend:  http://localhost:3001/api
+    1. Tanstack query needed?
 
-The frontend proxies any `/api/*` request to the backend, so from the browser you can just call `/api/...` — no CORS setup needed in development.
+1. Unit test - they are using jest with internal, could possibly look at vitest
 
-## Verifying it works
+1. Back-end
 
-With both servers running:
+    1. DB: postgres, graphql, prisma
 
-```bash
-curl http://localhost:3000/api/health
-```
+    1. Nest.js
 
-Expected response:
+1. Video demo talking about project
 
-```json
-{ "status": "ok", "timestamp": "..." }
-```
-
-This request hits the frontend (port 3000) and is proxied to the backend (port 3001), confirming both apps and the proxy are working.
-
-## Scripts (run from the repo root)
-
-| Command | What it does |
-|---|---|
-| `pnpm dev` | Runs backend and frontend together |
-| `pnpm build` | Builds both apps for production |
-| `pnpm test` | Runs the backend test suite |
-
-## Where to build
-
-- **Backend** — add feature modules under `apps/backend/src/`. The `/api/health` endpoint (`app.controller.ts` + `app.service.ts`) is a working reference for the controller → service pattern.
-- **Frontend** — add pages and components under `apps/frontend/src/`. Call the backend with `fetch('/api/...')`; the proxy handles the rest.
