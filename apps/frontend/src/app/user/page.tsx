@@ -3,12 +3,11 @@
 // Swap `placeholderUsers` for the real static DemoUser[] when wiring functionality.
 "use client";
 import { useSelectedUser } from "@/context/SelectedUserContext";
-import { users } from "@/data/users";
-
+import { users, findUserById } from "@/data/users";
 
 export default function UserPage() {
   const { selectedUserId, setSelectedUserId } = useSelectedUser();
-  const selectedUser = users.find((u) => u.id === selectedUserId) ?? null;
+  const selectedUser = findUserById(selectedUserId);
 
   return (
     <div className="max-w-3xl">
@@ -33,7 +32,7 @@ export default function UserPage() {
                 type="button"
                 onClick={()=> setSelectedUserId(user.id)}
                 className={[
-                  "flex items-center gap-3 rounded-lg border p-3 text-left transition",
+                  "flex items-center gap-3 rounded-lg border p-3 text-left transition hover:cursor-pointer",
                   selected
                     ? "border-gray-900 bg-gray-50 ring-1 ring-gray-900"
                     : "border-gray-200 hover:border-gray-400 hover:bg-gray-50",

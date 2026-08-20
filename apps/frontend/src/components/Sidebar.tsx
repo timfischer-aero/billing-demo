@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSelectedUser } from "@/context/SelectedUserContext";
-import { users } from "@/data/users";
+import { users, findUserById } from "@/data/users";
+
 
 const links = [
   { href: "/", label: "About" },
@@ -13,8 +14,8 @@ const links = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { selectedUserId } = useSelectedUser();
-  const activeUser = users.find((u) => u.id === selectedUserId) ?? null;
+  const {selectedUserId} = useSelectedUser();
+  const activeUser = findUserById(selectedUserId);
 
   return (
     <aside className="w-56 shrink-0 border-r p-4">
