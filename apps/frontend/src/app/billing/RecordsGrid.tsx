@@ -67,9 +67,11 @@ const showFilters = true;
 export default function RecordsGrid({
   records,
   selectedId,
+  onSelectRow,
 }: {
   records: DemoRecord[];
   selectedId: string | null;
+  onSelectRow: (id: string) => void;
 }) {
   const table = useTable({
     key: "billing-table",
@@ -147,7 +149,8 @@ export default function RecordsGrid({
               return (
                 <tr
                   key={row.id}
-                  className={isSelected ? "bg-blue-50" : "hover:bg-gray-50"}
+                  onClick={() => onSelectRow(row.original.id) }
+                  className={["cursor-pointer", isSelected ? "bg-blue-50" : "hover:bg-gray-50",].join(" ")}
                 >
                   {row.getAllCells().map((cell) => (
                     <td
