@@ -2,6 +2,7 @@
 // Static presentational grid shell — no TanStack, no state, no handlers.
 // Takes records + selectedId as props (page supplies them).
 // Flip showFilters to true to preview the filter row (collapsed by default).
+"use client";
 
 import type { DemoRecord } from "@/data/records";
 

@@ -9,5 +9,8 @@
   },
   "devDependencies": {
     "concurrently": "^10.0.5"
+  },
+  "dependencies": {
+    "@tanstack/react-table": "^9.1.2"
   }
 }
