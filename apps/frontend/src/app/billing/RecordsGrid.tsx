@@ -1,24 +1,68 @@
 // src/app/billing/RecordsGrid.tsx
-// Static presentational grid shell — no TanStack, no state, no handlers.
-// Takes records + selectedId as props (page supplies them).
-// Flip showFilters to true to preview the filter row (collapsed by default).
 "use client";
 
+import { tableFeatures, useTable } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import type { DemoRecord } from "@/data/records";
 
-const showFilters = false; // becomes Filters-toggle state later
+const features = tableFeatures({});
 
-// The 7 default-visible columns. Order here drives the header + filter rows.
-// (Body cells are rendered explicitly below to handle per-field formatting.)
-const columns: { key: string; label: string; sortActive?: boolean }[] = [
-  { key: "done", label: "Done" },
-  { key: "patientNumber", label: "Patient #", sortActive: true },
-  { key: "dos", label: "DOS" },
-  { key: "payer", label: "Payer" },
-  { key: "denyCode", label: "Deny code" },
-  { key: "comment", label: "Comment" },
-  { key: "whoChanged", label: "Changed by" },
+const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
+  {
+    accessorKey: "done",
+    header: "Done",
+    cell: (info) => (
+      <input
+        type="checkbox"
+        checked={info.getValue() as boolean}
+        disabled
+        readOnly
+        className="h-3.5 w-3.5"
+      />
+    ),
+  },
+  {
+    accessorKey: "patientNumber",
+    header: "Patient #",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "dos",
+    header: "DOS",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "payer",
+    header: "Payer",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "denyCode",
+    header: "Deny code",
+    cell: (info) => {
+      const code = info.getValue() as string | null;
+      return code ? (
+        <span className="text-blue-600 underline underline-offset-2">{code}</span>
+      ) : (
+        <span className="text-gray-400">—</span>
+      );
+    },
+  },
+  {
+    accessorKey: "comment",
+    header: "Comment",
+    cell: (info) => (
+      <span className="block max-w-[150px] truncate">{info.getValue() as string}</span>
+    ),
+  },
+  {
+    accessorKey: "whoChanged",
+    header: "Changed by",
+    cell: (info) => info.getValue(),
+  },
 ];
+
+const showFilters = true;
 
 export default function RecordsGrid({
   records,
@@ -27,6 +71,13 @@ export default function RecordsGrid({
   records: DemoRecord[];
   selectedId: string | null;
 }) {
+  const table = useTable({
+    key: "billing-table",
+    features,
+    columns,
+    data: records,
+  });
+
   return (
     <section className="rounded-xl border border-gray-200 bg-white">
       {/* Toolbar */}
@@ -57,96 +108,55 @@ export default function RecordsGrid({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-[13px]">
           <thead>
-            {/* Header row — click-to-sort (inert in the shell) */}
-            <tr className="bg-gray-50">
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  className={[
-                    "whitespace-nowrap border-b border-gray-200 px-2.5 py-2 font-medium text-gray-500",
-                    col.key === "done" ? "w-11 text-center" : "text-left",
-                  ].join(" ")}
-                >
-                  {col.label}
-                  {col.key !== "done" && (
-                    <span
-                      aria-hidden
-                      className={
-                        col.sortActive
-                          ? "ml-1 text-blue-600"
-                          : "ml-1 text-gray-300"
-                      }
-                    >
-                      {col.sortActive ? "↑" : "↕"}
-                    </span>
-                  )}
-                </th>
-              ))}
-            </tr>
-
-            {/* Filter row — collapsed by default (showFilters flag) */}
-            {showFilters && (
-              <tr className="bg-white">
-                {columns.map((col) => (
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr className="bg-gray-50" key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
                   <th
-                    key={col.key}
-                    className="border-b border-gray-200 px-1.5 py-1.5"
+                    key={header.id}
+                    className={[
+                      "whitespace-nowrap border-b border-gray-200 px-2.5 py-2 font-medium text-gray-500",
+                      header.column.id === "done" ? "w-11 text-center" : "text-left",
+                    ].join(" ")}
                   >
-                    {col.key !== "done" && (
-                      <input
-                        placeholder="filter…"
-                        className="h-6 w-full rounded border border-gray-200 bg-gray-50 px-1.5 text-[11px] text-gray-600 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
-                      />
-                    )}
+                    {header.isPlaceholder ? null : <table.FlexRender header={header} />}
                   </th>
                 ))}
               </tr>
-            )}
+            ))}
+
+            {showFilters &&
+              table.getHeaderGroups().map((headerGroup) => (
+                <tr className="bg-white" key={`filter-${headerGroup.id}`}>
+                  {headerGroup.headers.map((header) => (
+                    <th key={header.id} className="border-b border-gray-200 px-1.5 py-1.5">
+                      {header.column.id !== "done" && (
+                        <input
+                          placeholder="filter…"
+                          className="h-6 w-full rounded border border-gray-200 bg-gray-50 px-1.5 text-[11px] text-gray-600 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+                        />
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
           </thead>
 
           <tbody>
-            {records.map((r) => {
-              const isSelected = r.id === selectedId;
+            {table.getRowModel().rows.map((row) => {
+              const isSelected = row.original.id === selectedId;
               return (
                 <tr
-                  key={r.id}
+                  key={row.id}
                   className={isSelected ? "bg-blue-50" : "hover:bg-gray-50"}
                 >
-                  {/* Done — disabled checkbox (read-only in the grid) */}
-                  <td className="border-b border-gray-100 px-2 py-1.5 text-center">
-                    <input
-                      type="checkbox"
-                      checked={r.done}
-                      disabled
-                      readOnly
-                      className="h-3.5 w-3.5"
-                    />
-                  </td>
-                  <td className="whitespace-nowrap border-b border-gray-100 px-2.5 py-1.5 text-gray-900">
-                    {r.patientNumber}
-                  </td>
-                  <td className="whitespace-nowrap border-b border-gray-100 px-2.5 py-1.5 text-gray-900">
-                    {r.dos}
-                  </td>
-                  <td className="whitespace-nowrap border-b border-gray-100 px-2.5 py-1.5 text-gray-900">
-                    {r.payer}
-                  </td>
-                  {/* Deny code — clickable-looking; em dash when null */}
-                  <td className="whitespace-nowrap border-b border-gray-100 px-2.5 py-1.5">
-                    {r.denyCode ? (
-                      <span className="text-blue-600 underline underline-offset-2">
-                        {r.denyCode}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="max-w-[150px] truncate border-b border-gray-100 px-2.5 py-1.5 text-gray-600">
-                    {r.comment}
-                  </td>
-                  <td className="whitespace-nowrap border-b border-gray-100 px-2.5 py-1.5 text-gray-600">
-                    {r.whoChanged}
-                  </td>
+                  {row.getAllCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className="whitespace-nowrap border-b border-gray-100 px-2.5 py-1.5 text-gray-900"
+                    >
+                      <table.FlexRender cell={cell} />
+                    </td>
+                  ))}
                 </tr>
               );
             })}
