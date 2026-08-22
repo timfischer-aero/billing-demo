@@ -9,6 +9,9 @@ import {
   sortFn_alphanumeric,
   sortFn_text,
   sortFn_datetime,
+  columnFilteringFeature,
+  createFilteredRowModel,
+  filterFn_includesString,
 } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { DemoRecord } from "@/data/records";
@@ -21,6 +24,12 @@ const features = tableFeatures({
     alphanumeric: sortFn_alphanumeric,
     text: sortFn_text,
     datetime: sortFn_datetime,
+  },
+  columnFilteringFeature,
+  filteredRowModel: createFilteredRowModel(), // if using client-side filtering
+  // manualFiltering: true, // if using manual server-side filtering
+  filterFns: {
+    includesString: filterFn_includesString,
   },
 
 });
@@ -43,18 +52,21 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     accessorKey: "patientNumber",
     header: "Patient #",
     cell: (info) => info.getValue(),
+    filterFn: 'includesString',
   },
   {
     accessorKey: "dos",
     header: "DOS",
     cell: (info) => info.getValue(),
     sortFn: 'alphanumeric',
+    filterFn: 'includesString',
   },
   {
     accessorKey: "payer",
     header: "Payer",
     cell: (info) => info.getValue(),
     sortFn: 'alphanumeric',
+    filterFn: 'includesString',
   },
   {
     accessorKey: "denyCode",
@@ -68,6 +80,7 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
       );
     },
     sortFn: 'alphanumeric',
+    filterFn: 'includesString',
   },
   {
     accessorKey: "comment",
@@ -76,12 +89,14 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
       <span className="block max-w-[150px] truncate">{info.getValue() as string}</span>
     ),
     sortFn: 'alphanumeric',
+    filterFn: 'includesString',
   },
   {
     accessorKey: "whoChanged",
     header: "Changed by",
     cell: (info) => info.getValue(),
     sortFn: 'alphanumeric',
+    filterFn: 'includesString',
   },
 ];
 
@@ -110,6 +125,7 @@ export default function RecordsGrid({
     ],
   },
   });
+  
   //Setup component states
   
   const [showFilters, setShowFilters] = useState<boolean>(false);
@@ -181,16 +197,23 @@ export default function RecordsGrid({
             {showFilters &&
               table.getHeaderGroups().map((headerGroup) => (
                 <tr className="bg-white" key={`filter-${headerGroup.id}`}>
-                  {headerGroup.headers.map((header) => (
-                    <th key={header.id} className="border-b border-gray-200 px-1.5 py-1.5">
-                      {header.column.id !== "done" && (
-                        <input
-                          placeholder="filter…"
-                          className="h-6 w-full rounded border border-gray-200 bg-gray-50 px-1.5 text-[11px] text-gray-600 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
-                        />
-                      )}
-                    </th>
-                  ))}
+                  {headerGroup.headers.map((header) => {
+                    const column = header.column;
+                    const canFilter = column.getCanFilter();
+                    return (
+                      <th key={header.id} className="border-b border-gray-200 px-1.5 py-1.5">
+                        {column.id !== "done" && canFilter && (
+                          <input
+                            value={(column.getFilterValue() ?? "") as string}
+                            onChange={(e) => column.setFilterValue(e.target.value)}
+                            placeholder="filter…"
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-6 w-full rounded border border-gray-200 bg-gray-50 px-1.5 text-[11px] text-gray-600 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+                          />
+                        )}
+                      </th>
+                    );
+                  })}
                 </tr>
               ))}
           </thead>
