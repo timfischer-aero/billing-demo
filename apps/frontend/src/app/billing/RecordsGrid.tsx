@@ -12,6 +12,7 @@ import {
   columnFilteringFeature,
   createFilteredRowModel,
   filterFn_includesString,
+  columnSizingFeature,
 } from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { DemoRecord } from "@/data/records";
@@ -31,7 +32,7 @@ const features = tableFeatures({
   filterFns: {
     includesString: filterFn_includesString,
   },
-
+  columnSizingFeature,
 });
 
 const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
@@ -47,12 +48,15 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
         className="h-3.5 w-3.5"
       />
     ),
+    size: 44,
+    enableColumnFilter: false,
   },
   {
     accessorKey: "patientNumber",
     header: "Patient #",
     cell: (info) => info.getValue(),
     filterFn: 'includesString',
+    size: 112,
   },
   {
     accessorKey: "dos",
@@ -60,6 +64,7 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     cell: (info) => info.getValue(),
     sortFn: 'alphanumeric',
     filterFn: 'includesString',
+    size: 96,
   },
   {
     accessorKey: "payer",
@@ -67,6 +72,7 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     cell: (info) => info.getValue(),
     sortFn: 'alphanumeric',
     filterFn: 'includesString',
+    size: 160,
   },
   {
     accessorKey: "denyCode",
@@ -81,15 +87,17 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     },
     sortFn: 'alphanumeric',
     filterFn: 'includesString',
+    size: 96,
   },
   {
     accessorKey: "comment",
     header: "Comment",
     cell: (info) => (
-      <span className="block max-w-[150px] truncate">{info.getValue() as string}</span>
+      <span className="block truncate">{info.getValue() as string}</span>
     ),
     sortFn: 'alphanumeric',
     filterFn: 'includesString',
+    size: 240,
   },
   {
     accessorKey: "whoChanged",
@@ -97,9 +105,9 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     cell: (info) => info.getValue(),
     sortFn: 'alphanumeric',
     filterFn: 'includesString',
+    size: 112,
   },
 ];
-
 
 export default function RecordsGrid({
   records,
@@ -160,13 +168,19 @@ export default function RecordsGrid({
 
       {/* Scroll wrapper — scoped to the grid so the detail panel stays put */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse text-[13px]">
+        <table className="w-full min-w-[640px] border-collapse text-[13px] table-fixed">
+          <colgroup>
+            {table.getAllLeafColumns().map((column) => (
+              <col key={column.id} style={{ width: `${column.getSize()}px` }} />
+            ))}
+          </colgroup>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr className="bg-gray-50" key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   const canSort = header.column.getCanSort();
                   const sorted = header.column.getIsSorted(); // "asc" | "desc" | false
+                  const isFiltered = header.column.getIsFiltered();
                   return (
                     <th
                       key={header.id}
@@ -178,9 +192,16 @@ export default function RecordsGrid({
                       {header.isPlaceholder ? null : (
                         <div
                           onClick={header.column.getToggleSortingHandler()}
-                          className={canSort ? "flex cursor-pointer select-none items-center gap-1" : "flex items-center gap-1"}
+                          className={ [
+                            "flex items-center gap-1",
+                            canSort ? "cursor-pointer select-none" : "",
+                            isFiltered ? "text-blue-600 font-semibold" : "",
+                          ].join(" ")}
                         >
                           <table.FlexRender header={header} />
+                          {isFiltered && (
+                            <span aria-hidden title="Filtered" className="text-blue-600">⛁</span>
+                          )}
                           {canSort && (
                             <span aria-hidden className={sorted ? "text-blue-600" : "text-gray-300"}>
                               {sorted === "asc" ? "↑" : sorted === "desc" ? "↓" : "↕"}
