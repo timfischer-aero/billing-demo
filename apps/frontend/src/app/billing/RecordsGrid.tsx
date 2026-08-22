@@ -1,11 +1,29 @@
 // src/app/billing/RecordsGrid.tsx
 "use client";
 
-import { tableFeatures, useTable } from "@tanstack/react-table";
+import { 
+  tableFeatures, 
+  useTable,
+  rowSortingFeature,
+  createSortedRowModel,
+  sortFn_alphanumeric,
+  sortFn_text,
+  sortFn_datetime,
+} from "@tanstack/react-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { DemoRecord } from "@/data/records";
+import { useState } from "react";
 
-const features = tableFeatures({});
+const features = tableFeatures({
+  rowSortingFeature,
+  sortedRowModel: createSortedRowModel(), 
+  sortFns: {
+    alphanumeric: sortFn_alphanumeric,
+    text: sortFn_text,
+    datetime: sortFn_datetime,
+  },
+
+});
 
 const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
   {
@@ -30,11 +48,13 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     accessorKey: "dos",
     header: "DOS",
     cell: (info) => info.getValue(),
+    sortFn: 'alphanumeric',
   },
   {
     accessorKey: "payer",
     header: "Payer",
     cell: (info) => info.getValue(),
+    sortFn: 'alphanumeric',
   },
   {
     accessorKey: "denyCode",
@@ -47,6 +67,7 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
         <span className="text-gray-400">—</span>
       );
     },
+    sortFn: 'alphanumeric',
   },
   {
     accessorKey: "comment",
@@ -54,15 +75,16 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     cell: (info) => (
       <span className="block max-w-[150px] truncate">{info.getValue() as string}</span>
     ),
+    sortFn: 'alphanumeric',
   },
   {
     accessorKey: "whoChanged",
     header: "Changed by",
     cell: (info) => info.getValue(),
+    sortFn: 'alphanumeric',
   },
 ];
 
-const showFilters = true;
 
 export default function RecordsGrid({
   records,
@@ -73,12 +95,25 @@ export default function RecordsGrid({
   selectedId: string | null;
   onSelectRow: (id: string) => void;
 }) {
+  //Define table 
   const table = useTable({
     key: "billing-table",
     features,
     columns,
     data: records,
+    initialState: {
+    sorting: [
+      {
+        id: 'patientNumber',
+        desc: true, 
+      },
+    ],
+  },
   });
+  //Setup component states
+  
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white">
@@ -94,6 +129,7 @@ export default function RecordsGrid({
           </button>
           <button
             type="button"
+            onClick={() => setShowFilters((v) => !v)}
             className={[
               "flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs",
               showFilters
@@ -112,17 +148,33 @@ export default function RecordsGrid({
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr className="bg-gray-50" key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className={[
-                      "whitespace-nowrap border-b border-gray-200 px-2.5 py-2 font-medium text-gray-500",
-                      header.column.id === "done" ? "w-11 text-center" : "text-left",
-                    ].join(" ")}
-                  >
-                    {header.isPlaceholder ? null : <table.FlexRender header={header} />}
-                  </th>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const canSort = header.column.getCanSort();
+                  const sorted = header.column.getIsSorted(); // "asc" | "desc" | false
+                  return (
+                    <th
+                      key={header.id}
+                      className={[
+                        "whitespace-nowrap border-b border-gray-200 px-2.5 py-2 font-medium text-gray-500",
+                        header.column.id === "done" ? "w-11 text-center" : "text-left",
+                      ].join(" ")}
+                    >
+                      {header.isPlaceholder ? null : (
+                        <div
+                          onClick={header.column.getToggleSortingHandler()}
+                          className={canSort ? "flex cursor-pointer select-none items-center gap-1" : "flex items-center gap-1"}
+                        >
+                          <table.FlexRender header={header} />
+                          {canSort && (
+                            <span aria-hidden className={sorted ? "text-blue-600" : "text-gray-300"}>
+                              {sorted === "asc" ? "↑" : sorted === "desc" ? "↓" : "↕"}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      </th>
+                    );
+                })}
               </tr>
             ))}
 
