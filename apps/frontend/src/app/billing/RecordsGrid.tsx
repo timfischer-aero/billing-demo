@@ -1,6 +1,6 @@
 // src/app/billing/RecordsGrid.tsx
 "use client";
-
+import { useCreateAtom, useSelector } from '@tanstack/react-store' //This allows for us to control the state of various tanstack table features
 import { 
   tableFeatures, 
   useTable,
@@ -13,14 +13,21 @@ import {
   createFilteredRowModel,
   filterFn_includesString,
   columnSizingFeature,
+  columnVisibilityFeature,
 } from "@tanstack/react-table";
-import type { ColumnDef } from "@tanstack/react-table";
+
+import ColumnsMenu from "./ColumnsMenu";
+
+//Type Imports
+import type { ColumnDef, ColumnVisibilityState  } from "@tanstack/react-table";
 import type { DemoRecord } from "@/data/records";
+
 import { useState } from "react";
 
 const features = tableFeatures({
   rowSortingFeature,
-  sortedRowModel: createSortedRowModel(), 
+  sortedRowModel: createSortedRowModel(),
+  columnVisibilityFeature,  
   sortFns: {
     alphanumeric: sortFn_alphanumeric,
     text: sortFn_text,
@@ -50,6 +57,7 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     ),
     size: 44,
     enableColumnFilter: false,
+    enableHiding: true,
   },
   {
     accessorKey: "patientNumber",
@@ -57,6 +65,7 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     cell: (info) => info.getValue(),
     filterFn: 'includesString',
     size: 112,
+    enableHiding: false,
   },
   {
     accessorKey: "dos",
@@ -65,6 +74,7 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     sortFn: 'alphanumeric',
     filterFn: 'includesString',
     size: 96,
+    enableHiding: true,
   },
   {
     accessorKey: "payer",
@@ -73,6 +83,7 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     sortFn: 'alphanumeric',
     filterFn: 'includesString',
     size: 160,
+    enableHiding: true,
   },
   {
     accessorKey: "denyCode",
@@ -88,6 +99,7 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     sortFn: 'alphanumeric',
     filterFn: 'includesString',
     size: 96,
+    enableHiding: true,
   },
   {
     accessorKey: "comment",
@@ -98,6 +110,7 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     sortFn: 'alphanumeric',
     filterFn: 'includesString',
     size: 240,
+    enableHiding: true,
   },
   {
     accessorKey: "whoChanged",
@@ -106,6 +119,7 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     sortFn: 'alphanumeric',
     filterFn: 'includesString',
     size: 112,
+    enableHiding: true,
   },
 ];
 
@@ -118,12 +132,20 @@ export default function RecordsGrid({
   selectedId: string | null;
   onSelectRow: (id: string) => void;
 }) {
+
+  //Setup Visibility Atom - component scope instead of module scope
+  const columnVisibilityAtom = useCreateAtom<ColumnVisibilityState>({}); // Setting this up as empty allows for all columns to be shown by default
+  const columnVisibility = useSelector(columnVisibilityAtom);
+
   //Define table 
   const table = useTable({
     key: "billing-table",
     features,
     columns,
     data: records,
+    atoms: {
+      columnVisibility: columnVisibilityAtom,
+    },
     initialState: {
     sorting: [
       {
@@ -145,12 +167,7 @@ export default function RecordsGrid({
       <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
         <span className="text-base font-medium text-gray-900">Records</span>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="flex h-8 items-center gap-1.5 rounded-md border border-gray-300 px-2.5 text-xs text-gray-600 hover:bg-gray-50"
-          >
-            Columns <span aria-hidden className="text-[10px]">▾</span>
-          </button>
+          <ColumnsMenu />
           <button
             type="button"
             onClick={() => setShowFilters((v) => !v)}
@@ -170,7 +187,7 @@ export default function RecordsGrid({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-[13px] table-fixed">
           <colgroup>
-            {table.getAllLeafColumns().map((column) => (
+            {table.getVisibleLeafColumns().map((column) => (
               <col key={column.id} style={{ width: `${column.getSize()}px` }} />
             ))}
           </colgroup>
@@ -248,7 +265,7 @@ export default function RecordsGrid({
                   onClick={() => onSelectRow(row.original.id) }
                   className={["cursor-pointer", isSelected ? "bg-blue-50" : "hover:bg-gray-50",].join(" ")}
                 >
-                  {row.getAllCells().map((cell) => (
+                  {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
                       className="whitespace-nowrap border-b border-gray-100 px-2.5 py-1.5 text-gray-900"
