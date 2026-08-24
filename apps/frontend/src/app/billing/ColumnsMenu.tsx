@@ -1,6 +1,9 @@
 // src/app/billing/ColumnsMenu.tsx
 "use client";
 
+import {useState} from "react";
+import { ReactTable } from "@tanstack/react-table";
+
 const placeholderColumns = [
   { id: "done", label: "Done", visible: true },
   { id: "dos", label: "DOS", visible: true },
@@ -10,14 +13,15 @@ const placeholderColumns = [
   { id: "whoChanged", label: "Changed by", visible: true },
 ];
 
-export default function ColumnsMenu() {
-    const open = true;
+export default function ColumnsMenu({table}: {table: any}) {
+    const [open, setOpen] = useState<boolean>(false);
 
     return (
         <div className="relative">
         {/* Trigger button */}
         <button
             type="button"
+            onClick={() => setOpen((v) => !v)}
             className="flex h-8 items-center gap-1.5 rounded-md border border-gray-300 px-2.5 text-xs text-gray-600 hover:bg-gray-50"
         >
             Columns <span aria-hidden className="text-[10px]">▾</span>

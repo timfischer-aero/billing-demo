@@ -167,7 +167,7 @@ export default function RecordsGrid({
       <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
         <span className="text-base font-medium text-gray-900">Records</span>
         <div className="flex items-center gap-2">
-          <ColumnsMenu />
+          <ColumnsMenu table={table}/>
           <button
             type="button"
             onClick={() => setShowFilters((v) => !v)}
