@@ -1,13 +1,30 @@
 // src/app/user/page.tsx
-// Placeholder mockup — presentational only, no state or handlers yet.
-// Swap `placeholderUsers` for the real static DemoUser[] when wiring functionality.
+
 "use client";
 import { useSelectedUser } from "@/context/SelectedUserContext";
 import { users, findUserById } from "@/data/users";
+import { useViewState } from "@/context/ViewStateContext";
+import { useSelector } from '@tanstack/react-store'
+
 
 export default function UserPage() {
   const { selectedUserId, setSelectedUserId } = useSelectedUser();
   const selectedUser = findUserById(selectedUserId);
+  
+  const { columnVisibilityAtom, sortingAtom, columnFiltersAtom, clearViewState } = useViewState();
+  const columnVisibility = useSelector(columnVisibilityAtom);
+  const sorting = useSelector(sortingAtom);
+  const columnFilters = useSelector(columnFiltersAtom);
+
+  //Build Visibility Display Text
+  const hiddenCols = Object.keys(columnVisibility).filter(
+    (id) => columnVisibility[id] === false
+  );
+
+  const visibilityDisplay =
+    hiddenCols.length === 0
+      ? "All columns"
+      : `All except: ${hiddenCols.join(", ")}`;
 
   return (
     <div className="max-w-3xl">
@@ -71,15 +88,15 @@ export default function UserPage() {
             <dl className="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200">
               <div className="flex justify-between gap-4 px-4 py-3">
                 <dt className="text-sm text-gray-500">Visible columns</dt>
-                <dd className="text-sm text-gray-400">—</dd>
+                <dd className="text-sm text-gray-400">{visibilityDisplay}</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
                 <dt className="text-sm text-gray-500">Sort order</dt>
-                <dd className="text-sm text-gray-400">—</dd>
+                <dd className="text-sm text-gray-400">{sorting.length === 0 ? "None" : sorting.map((s) => `${s.id} (${s.desc ? "desc" : "asc"})`).join(", ")}</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
                 <dt className="text-sm text-gray-500">Active filters</dt>
-                <dd className="text-sm text-gray-400">—</dd>
+                <dd className="text-sm text-gray-400">{columnFilters.length === 0 ? "None" : columnFilters.map((c) => `${c.id} = ${c.value}`).join(", ")}</dd>
               </div>
             </dl>
           </>
@@ -102,6 +119,7 @@ export default function UserPage() {
             </p>
             <button
               type="button"
+              onClick={() => clearViewState()}
               className="mt-3 rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
             >
               Clear saved settings

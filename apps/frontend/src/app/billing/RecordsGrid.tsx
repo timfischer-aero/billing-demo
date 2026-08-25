@@ -136,7 +136,6 @@ export default function RecordsGrid({
   //Setup Atoms - component scope instead of module scope
   const { columnVisibilityAtom, sortingAtom, columnFiltersAtom } = useViewState();
  
-
   //Define table 
   const table = useTable({
     key: "billing-table",
