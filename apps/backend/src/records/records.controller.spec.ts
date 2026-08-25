@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RecordsController } from './records.controller';
-import { RecordsService } from "./records.service";
+import { RecordsService } from './records.service';
 
 describe('RecordsController', () => {
   let controller: RecordsController;
@@ -9,7 +9,7 @@ describe('RecordsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RecordsController],
       providers: [RecordsService],
-  }).compile();
+    }).compile();
 
     controller = module.get<RecordsController>(RecordsController);
   });
@@ -18,8 +18,7 @@ describe('RecordsController', () => {
     expect(controller).toBeDefined();
   });
 
-  it("returns all records from the service", () => {
+  it('returns all records from the service', () => {
     expect(controller.findAll()).toHaveLength(4);
   });
-
 });

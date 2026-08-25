@@ -16,16 +16,15 @@ describe('RecordsService', () => {
     expect(service).toBeDefined();
   });
 
-  it("returns all initial records", () => {
+  it('returns all initial records', () => {
     const records = service.findAll();
 
     expect(records).toHaveLength(4);
     expect(records.map((record) => record.id)).toEqual([
-      "r1",
-      "r2",
-      "r3",
-      "r4",
+      'r1',
+      'r2',
+      'r3',
+      'r4',
     ]);
   });
-
 });

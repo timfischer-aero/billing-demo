@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import type { BillingRecord } from "./record.type";
-import { initialRecords } from "./records.data";
+import { Injectable } from '@nestjs/common';
+import type { BillingRecord } from './record.type';
+import { initialRecords } from './records.data';
 
 @Injectable()
 export class RecordsService {
