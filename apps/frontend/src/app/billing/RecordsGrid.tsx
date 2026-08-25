@@ -1,6 +1,6 @@
 // src/app/billing/RecordsGrid.tsx
 "use client";
-import { useCreateAtom, useSelector } from '@tanstack/react-store' //This allows for us to control the state of various tanstack table features
+import { useCreateAtom } from '@tanstack/react-store' //This allows for us to control the state of various tanstack table features
 import { 
   tableFeatures, 
   useTable,
@@ -21,7 +21,7 @@ import ColumnsMenu from "./ColumnsMenu";
 //Type Imports
 import type { ColumnDef, ColumnVisibilityState  } from "@tanstack/react-table";
 import type { DemoRecord } from "@/data/records";
-
+import { useViewState } from "@/context/ViewStateContext";
 import { useState } from "react";
 
 const features = tableFeatures({
@@ -133,9 +133,9 @@ export default function RecordsGrid({
   onSelectRow: (id: string) => void;
 }) {
 
-  //Setup Visibility Atom - component scope instead of module scope
-  const columnVisibilityAtom = useCreateAtom<ColumnVisibilityState>({}); // Setting this up as empty allows for all columns to be shown by default
-  const columnVisibility = useSelector(columnVisibilityAtom);
+  //Setup Atoms - component scope instead of module scope
+  const { columnVisibilityAtom, sortingAtom, columnFiltersAtom } = useViewState();
+ 
 
   //Define table 
   const table = useTable({
@@ -145,15 +145,10 @@ export default function RecordsGrid({
     data: records,
     atoms: {
       columnVisibility: columnVisibilityAtom,
+      sorting: sortingAtom,
+      columnFilters: columnFiltersAtom,
     },
-    initialState: {
-    sorting: [
-      {
-        id: 'patientNumber',
-        desc: true, 
-      },
-    ],
-  },
+    
   });
   
   //Setup component states
