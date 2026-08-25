@@ -1,8 +1,8 @@
 // src/app/billing/DetailPanel.tsx
-// Static presentational — no state, no handlers. Editable fields use
-// defaultValue (uncontrolled) so they look/feel real without wiring.
+"use client"
 
 import type { DemoRecord } from "@/data/records";
+import { useDefinitionModal } from "@/context/DefinitionModalContext";
 
 function LockedField({ label, value }: { label: string; value: string }) {
   return (
@@ -16,6 +16,8 @@ function LockedField({ label, value }: { label: string; value: string }) {
 }
 
 export default function DetailPanel({ record }: { record: DemoRecord }) {
+  const { openDefinition } = useDefinitionModal();
+
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-4">
       <div className="mb-3 flex items-baseline justify-between">
@@ -57,9 +59,14 @@ export default function DetailPanel({ record }: { record: DemoRecord }) {
             <button
               type="button"
               aria-label="Deny code definition"
+              disabled={record.denyCode === null}
+              onClick={() => {
+                if (record.denyCode !== null) {
+                  openDefinition(record.denyCode);
+                }
+              }}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200 text-blue-600 hover:bg-gray-50"
             >
-              {/* info glyph — popover wiring comes later */}
               <span aria-hidden className="text-sm font-medium">i</span>
             </button>
           </div>
