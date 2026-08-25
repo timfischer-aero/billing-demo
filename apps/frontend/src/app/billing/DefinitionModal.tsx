@@ -1,14 +1,67 @@
 "use client";
+import { useEffect, useState } from "react";
 
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import {useDefinitionModal} from "@/context/DefinitionModalContext";
-import { getDefinition } from "@/data/denyCodes";
+import type { TermDefinition } from "@/data/denyCodes";
+import { fetchDefinition } from "@/data/definitionsApi";
 
 export default function DefinitionModal() {
     const { openCode, closeDefinition } = useDefinitionModal();
+    const [definition, setDefinition] = useState<TermDefinition | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (openCode === null) {
+            return;
+        }
+
+        const controller = new AbortController();
+
+        setDefinition(null);
+        setError(null);
+        setIsLoading(true);
+
+        fetchDefinition(openCode, controller.signal)
+            .then((loadedDefinition) => {
+                setDefinition(loadedDefinition);
+            })
+            .catch((cause: unknown) => {
+                if (controller.signal.aborted) {
+                    return;
+                }
+
+                setError(
+                    cause instanceof Error
+                    ? cause.message
+                    : "An unexpected error occurred.",
+                );
+            })
+            .finally(() => {
+            if (!controller.signal.aborted) {
+                setIsLoading(false);
+            }
+            });
+
+        return () => {
+            controller.abort();
+        };
+    }, [openCode]);
 
     const isOpen = openCode !== null;
-    const definition = openCode ? getDefinition(openCode) : null;
+    
+    let definitionText: string;
+
+    if (isLoading) {
+        definitionText = "Loading definition…";
+    } else if (error !== null) {
+        definitionText = error;
+    } else if (definition !== null) {
+        definitionText = definition.definition;
+    } else {
+        definitionText = `No definition available for ${openCode}.`;
+    }
 
     return (
          <Dialog
@@ -27,9 +80,7 @@ export default function DefinitionModal() {
                 </DialogTitle>
 
                 <p className="mt-2 text-sm leading-relaxed text-gray-700">
-                    {definition
-                    ? definition.definition
-                    : `No definition available for ${openCode}.`}
+                    {definitionText}
                 </p>
 
                 <div className="mt-5 text-right">
