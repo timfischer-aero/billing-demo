@@ -1,23 +1,30 @@
 // src/app/billing/ColumnsMenu.tsx
 "use client";
 
-import {useState} from "react";
-import { ReactTable } from "@tanstack/react-table";
-
-const placeholderColumns = [
-  { id: "done", label: "Done", visible: true },
-  { id: "dos", label: "DOS", visible: true },
-  { id: "payer", label: "Payer", visible: true },
-  { id: "denyCode", label: "Deny code", visible: false }, // shown unchecked to preview that state
-  { id: "comment", label: "Comment", visible: true },
-  { id: "whoChanged", label: "Changed by", visible: true },
-];
+import {useState, useRef, useEffect, useMemo} from "react";
 
 export default function ColumnsMenu({table}: {table: any}) {
     const [open, setOpen] = useState<boolean>(false);
+    const availCols = useMemo(() => table.getAllColumns().filter((item) => item.getCanHide()),
+        [table]
+    );
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!open) return; // only listen while the menu is open
+
+        function handleClickOutside(event: MouseEvent) {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+            setOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [open]);
 
     return (
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
         {/* Trigger button */}
         <button
             type="button"
@@ -35,12 +42,14 @@ export default function ColumnsMenu({table}: {table: any}) {
                 <button
                 type="button"
                 className="text-xs text-blue-600 hover:underline"
+                onClick={ () => availCols.forEach((c) => c.toggleVisibility(true))}
                 >
                 Show all
                 </button>
                 <button
                 type="button"
                 className="text-xs text-blue-600 hover:underline"
+                onClick={ () => availCols.forEach((c) => c.toggleVisibility(false))}
                 >
                 Hide all
                 </button>
@@ -48,18 +57,18 @@ export default function ColumnsMenu({table}: {table: any}) {
 
             {/* Column checkbox list */}
             <div className="py-1">
-                {placeholderColumns.map((col) => (
+                {availCols.map((col) => (
                 <label
                     key={col.id}
                     className="flex cursor-pointer items-center gap-2.5 px-3 py-1.5 text-[13px] text-gray-800 hover:bg-gray-50"
                 >
                     <input
                     type="checkbox"
-                    checked={col.visible}
-                    readOnly
+                    checked={col.getIsVisible()}
+                    onChange={col.getToggleVisibilityHandler()}
                     className="h-4 w-4"
                     />
-                    {col.label}
+                    {col.columnDef.header}
                 </label>
                 ))}
             </div>
