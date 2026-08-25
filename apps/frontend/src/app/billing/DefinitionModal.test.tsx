@@ -1,11 +1,18 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DefinitionModalProvider,
   useDefinitionModal,
 } from "@/context/DefinitionModalContext";
+import { fetchDefinition } from "@/data/definitionsApi";
 import DefinitionModal from "./DefinitionModal";
+
+vi.mock("@/data/definitionsApi", () => ({
+  fetchDefinition: vi.fn(),
+}));
+
+const fetchDefinitionMock = vi.mocked(fetchDefinition);
 
 function ModalTrigger({ code }: { code: string }) {
   const { openDefinition } = useDefinitionModal();
@@ -27,6 +34,14 @@ function renderModal(code: string) {
 }
 
 describe("DefinitionModal", () => {
+  beforeEach(() => {
+    fetchDefinitionMock.mockReset();
+    fetchDefinitionMock.mockImplementation(async (term) => ({
+      term,
+      definition: `Definition for ${term}`,
+    }));
+  });
+
   it("shows the requested definition", async () => {
     const user = userEvent.setup();
     renderModal("CO-45");
@@ -39,19 +54,18 @@ describe("DefinitionModal", () => {
     expect(
       screen.getByRole("heading", { name: "CO-45" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Charge exceeds the fee schedule/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Definition for CO-45")).toBeInTheDocument();
   });
 
   it("shows a fallback for an unknown code", async () => {
     const user = userEvent.setup();
+    fetchDefinitionMock.mockResolvedValueOnce(null);
     renderModal("UNKNOWN");
 
     await user.click(screen.getByRole("button", { name: "Open UNKNOWN" }));
 
     expect(
-      screen.getByText("No definition available for UNKNOWN."),
+      await screen.findByText("No definition available for UNKNOWN."),
     ).toBeInTheDocument();
   });
 
@@ -60,6 +74,7 @@ describe("DefinitionModal", () => {
     renderModal("PR-1");
 
     await user.click(screen.getByRole("button", { name: "Open PR-1" }));
+    await screen.findByText("Definition for PR-1");
     await user.click(screen.getByRole("button", { name: "Close" }));
 
     await waitFor(() => {
@@ -72,6 +87,7 @@ describe("DefinitionModal", () => {
     renderModal("CO-97");
 
     await user.click(screen.getByRole("button", { name: "Open CO-97" }));
+    await screen.findByText("Definition for CO-97");
     await user.keyboard("{Escape}");
 
     await waitFor(() => {

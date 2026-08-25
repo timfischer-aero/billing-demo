@@ -9,6 +9,13 @@ import DefinitionModal from "./DefinitionModal";
 import DetailPanel from "./DetailPanel";
 import RecordsGrid from "./RecordsGrid";
 
+vi.mock("@/data/definitionsApi", () => ({
+  fetchDefinition: vi.fn(async (term: string) => ({
+    term,
+    definition: `Definition for ${term}`,
+  })),
+}));
+
 function renderDetailPanel(record: DemoRecord) {
   return render(
     <DefinitionModalProvider>
