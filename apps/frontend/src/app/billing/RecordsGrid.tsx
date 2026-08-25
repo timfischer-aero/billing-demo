@@ -17,6 +17,7 @@ import {
 } from "@tanstack/react-table";
 
 import ColumnsMenu from "./ColumnsMenu";
+import { useDefinitionModal } from "@/context/DefinitionModalContext";
 
 //Type Imports
 import type { ColumnDef, ColumnVisibilityState  } from "@tanstack/react-table";
@@ -41,6 +42,27 @@ const features = tableFeatures({
   },
   columnSizingFeature,
 });
+
+function DenyCodeCell({ code }: { code: string | null }) {
+  const { openDefinition } = useDefinitionModal();
+
+  if (code === null) {
+    return <span className="text-gray-400">—</span>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        openDefinition(code);
+      }}
+      className="cursor-pointer text-blue-600 underline underline-offset-2 hover:text-blue-800"
+    >
+      {code}
+    </button>
+  );
+}
 
 const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
   {
@@ -88,14 +110,9 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
   {
     accessorKey: "denyCode",
     header: "Deny code",
-    cell: (info) => {
-      const code = info.getValue() as string | null;
-      return code ? (
-        <span className="text-blue-600 underline underline-offset-2">{code}</span>
-      ) : (
-        <span className="text-gray-400">—</span>
-      );
-    },
+    cell: (info) => (
+      <DenyCodeCell code={info.getValue() as string | null} />
+    ),
     sortFn: 'alphanumeric',
     filterFn: 'includesString',
     size: 96,
