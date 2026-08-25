@@ -1,6 +1,6 @@
 // src/app/billing/RecordsGrid.tsx
 "use client";
-import { useCreateAtom } from '@tanstack/react-store' //This allows for us to control the state of various tanstack table features
+import { useCreateAtom, useSelector } from '@tanstack/react-store' //This allows for us to control the state of various tanstack table features
 import { 
   tableFeatures, 
   useTable,
@@ -133,7 +133,7 @@ export default function RecordsGrid({
   onSelectRow: (id: string) => void;
 }) {
 
-  //Setup Atoms - component scope instead of module scope
+  //Grab Atoms - component scope instead of module scope
   const { columnVisibilityAtom, sortingAtom, columnFiltersAtom } = useViewState();
  
   //Define table 
@@ -151,8 +151,8 @@ export default function RecordsGrid({
   });
   
   //Setup component states
-  
-  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const columnFilters = useSelector(columnFiltersAtom);
+  const [showFilters, setShowFilters] = useState(() => columnFilters.length > 0);
 
 
   return (

@@ -124,6 +124,13 @@ export default function UserPage() {
             >
               Clear saved settings
             </button>
+            <button
+              type="button"
+              onClick={() => setSelectedUserId(null)}
+              className="mt-3 rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+            >
+              Clear saved user
+            </button>
           </>
         ) : (
           <p className="mt-1 text-sm text-gray-400">
