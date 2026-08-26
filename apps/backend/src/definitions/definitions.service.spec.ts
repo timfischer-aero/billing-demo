@@ -1,44 +1,78 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { DatabaseService } from '../database/database.service';
 import { DefinitionsService } from './definitions.service';
 
 describe('DefinitionsService', () => {
   let service: DefinitionsService;
+  let queryMock: jest.Mock;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [DefinitionsService],
-    }).compile();
+    queryMock = jest.fn();
 
-    service = module.get<DefinitionsService>(DefinitionsService);
+    const module: TestingModule =
+      await Test.createTestingModule({
+        providers: [
+          DefinitionsService,
+          {
+            provide: DatabaseService,
+            useValue: {
+              query: queryMock,
+            },
+          },
+        ],
+      }).compile();
+
+    service =
+      module.get<DefinitionsService>(DefinitionsService);
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  it.each(['CO-45', 'PR-1', 'CO-97'])(
-    'returns the definition for %s',
-    (term) => {
-      const result = service.findOne(term);
+  it('queries for the requested term', async () => {
+    const storedDefinition = {
+      term: 'CO-45',
+      definition: 'Test definition',
+    };
 
-      expect(result).not.toBeNull();
-      expect(result?.term).toBe(term);
-      expect(result?.definition.length).toBeGreaterThan(0);
-    },
-  );
+    queryMock.mockResolvedValue({
+      rows: [storedDefinition],
+    });
 
-  it('returns null when the term is unknown', () => {
-    expect(service.findOne('UNKNOWN')).toBeNull();
+    await expect(
+      service.findOne('CO-45'),
+    ).resolves.toEqual(storedDefinition);
+
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE term = $1'),
+      ['CO-45'],
+    );
   });
 
-  it('returns a copy instead of exposing stored data', () => {
-    const firstResult = service.findOne('CO-45');
-    const secondResult = service.findOne('CO-45');
+  it('returns null when no row is found', async () => {
+    queryMock.mockResolvedValue({
+      rows: [],
+    });
 
-    expect(firstResult).toEqual(secondResult);
-    expect(firstResult).not.toBe(secondResult);
+    await expect(
+      service.findOne('UNKNOWN'),
+    ).resolves.toBeNull();
   });
 
+  it('returns a copy of the database row', async () => {
+    const storedDefinition = {
+      term: 'PR-1',
+      definition: 'Test definition',
+    };
 
+    queryMock.mockResolvedValue({
+      rows: [storedDefinition],
+    });
 
+    const result = await service.findOne('PR-1');
+
+    expect(result).toEqual(storedDefinition);
+    expect(result).not.toBe(storedDefinition);
+  });
 });

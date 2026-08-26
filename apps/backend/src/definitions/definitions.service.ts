@@ -1,12 +1,31 @@
 import { Injectable } from '@nestjs/common';
-import { initialDefinitions } from './definitions.data';
+import type { QueryResultRow } from 'pg';
+import { DatabaseService } from '../database/database.service';
 import type { TermDefinition } from './term-definition.type';
+
+type TermDefinitionRow = TermDefinition & QueryResultRow;
 
 @Injectable()
 export class DefinitionsService {
-  findOne(term: string): TermDefinition | null {
-    const result = initialDefinitions[term];
+  constructor(
+    private readonly databaseService: DatabaseService,
+  ) {}
 
-    return result ? { ...result } : null;
+  async findOne(
+    term: string,
+  ): Promise<TermDefinition | null> {
+    const result =
+      await this.databaseService.query<TermDefinitionRow>(
+        `
+          SELECT term, definition
+          FROM deny_code_definitions
+          WHERE term = $1
+        `,
+        [term],
+      );
+
+    const definition = result.rows[0];
+
+    return definition ? { ...definition } : null;
   }
 }

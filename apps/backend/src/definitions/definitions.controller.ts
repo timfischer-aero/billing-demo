@@ -14,15 +14,18 @@ export class DefinitionsController {
   ) {}
 
   @Get(':term')
-  findOne(@Param('term') term: string): TermDefinition {
-    const definition = this.definitionsService.findOne(term);
+async findOne(
+  @Param('term') term: string,
+): Promise<TermDefinition> {
+  const definition =
+    await this.definitionsService.findOne(term);
 
-    if (definition === null) {
-      throw new NotFoundException(
-        `No definition available for ${term}.`,
-      );
-    }
-
-    return definition;
+  if (definition === null) {
+    throw new NotFoundException(
+      `No definition available for ${term}.`,
+    );
   }
+
+  return definition;
+}
 }
