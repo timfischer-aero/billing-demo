@@ -5,22 +5,15 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  Pool,
-  type QueryResult,
-  type QueryResultRow,
-} from 'pg';
+import { Pool, type QueryResult, type QueryResultRow } from 'pg';
 
 @Injectable()
-export class DatabaseService
-  implements OnModuleInit, OnModuleDestroy
-{
+export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DatabaseService.name);
   private readonly pool: Pool;
 
   constructor(private readonly configService: ConfigService) {
-    const connectionString =
-      this.configService.get<string>('DATABASE_URL');
+    const connectionString = this.configService.get<string>('DATABASE_URL');
 
     if (!connectionString) {
       throw new Error('DATABASE_URL is not configured.');
@@ -29,10 +22,7 @@ export class DatabaseService
     this.pool = new Pool({ connectionString });
 
     this.pool.on('error', (error) => {
-      this.logger.error(
-        'Unexpected PostgreSQL pool error.',
-        error.stack,
-      );
+      this.logger.error('Unexpected PostgreSQL pool error.', error.stack);
     });
   }
 

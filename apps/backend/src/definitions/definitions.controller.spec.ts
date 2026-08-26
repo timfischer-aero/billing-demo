@@ -10,23 +10,19 @@ describe('DefinitionsController', () => {
   beforeEach(async () => {
     findOneMock = jest.fn();
 
-    const module: TestingModule =
-      await Test.createTestingModule({
-        controllers: [DefinitionsController],
-        providers: [
-          {
-            provide: DefinitionsService,
-            useValue: {
-              findOne: findOneMock,
-            },
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [DefinitionsController],
+      providers: [
+        {
+          provide: DefinitionsService,
+          useValue: {
+            findOne: findOneMock,
           },
-        ],
-      }).compile();
+        },
+      ],
+    }).compile();
 
-    controller =
-      module.get<DefinitionsController>(
-        DefinitionsController,
-      );
+    controller = module.get<DefinitionsController>(DefinitionsController);
   });
 
   it('should be defined', () => {
@@ -41,9 +37,7 @@ describe('DefinitionsController', () => {
 
     findOneMock.mockResolvedValue(definition);
 
-    await expect(
-      controller.findOne('CO-45'),
-    ).resolves.toEqual(definition);
+    await expect(controller.findOne('CO-45')).resolves.toEqual(definition);
 
     expect(findOneMock).toHaveBeenCalledWith('CO-45');
   });
@@ -51,8 +45,8 @@ describe('DefinitionsController', () => {
   it('throws NotFoundException for an unknown term', async () => {
     findOneMock.mockResolvedValue(null);
 
-    await expect(
-      controller.findOne('UNKNOWN'),
-    ).rejects.toThrow(NotFoundException);
+    await expect(controller.findOne('UNKNOWN')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 });

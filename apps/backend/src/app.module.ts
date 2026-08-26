@@ -11,7 +11,10 @@ import { DatabaseModule } from './database/database.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    RecordsModule, DefinitionsModule, DatabaseModule],
+    RecordsModule,
+    DefinitionsModule,
+    DatabaseModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

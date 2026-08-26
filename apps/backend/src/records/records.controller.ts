@@ -7,7 +7,7 @@ export class RecordsController {
   constructor(private readonly recordsService: RecordsService) {}
 
   @Get()
-  findAll(): BillingRecord[] {
+  async findAll(): Promise<BillingRecord[]> {
     return this.recordsService.findAll();
   }
 }

@@ -7,22 +7,17 @@ type TermDefinitionRow = TermDefinition & QueryResultRow;
 
 @Injectable()
 export class DefinitionsService {
-  constructor(
-    private readonly databaseService: DatabaseService,
-  ) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
-  async findOne(
-    term: string,
-  ): Promise<TermDefinition | null> {
-    const result =
-      await this.databaseService.query<TermDefinitionRow>(
-        `
+  async findOne(term: string): Promise<TermDefinition | null> {
+    const result = await this.databaseService.query<TermDefinitionRow>(
+      `
           SELECT term, definition
           FROM deny_code_definitions
           WHERE term = $1
         `,
-        [term],
-      );
+      [term],
+    );
 
     const definition = result.rows[0];
 

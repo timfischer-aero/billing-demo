@@ -12,9 +12,9 @@ describe('DatabaseService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue(
-              'postgresql://test:test@localhost:5432/test',
-            ),
+            get: jest
+              .fn()
+              .mockReturnValue('postgresql://test:test@localhost:5432/test'),
           },
         },
       ],

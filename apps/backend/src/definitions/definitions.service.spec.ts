@@ -9,21 +9,19 @@ describe('DefinitionsService', () => {
   beforeEach(async () => {
     queryMock = jest.fn();
 
-    const module: TestingModule =
-      await Test.createTestingModule({
-        providers: [
-          DefinitionsService,
-          {
-            provide: DatabaseService,
-            useValue: {
-              query: queryMock,
-            },
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        DefinitionsService,
+        {
+          provide: DatabaseService,
+          useValue: {
+            query: queryMock,
           },
-        ],
-      }).compile();
+        },
+      ],
+    }).compile();
 
-    service =
-      module.get<DefinitionsService>(DefinitionsService);
+    service = module.get<DefinitionsService>(DefinitionsService);
   });
 
   it('should be defined', () => {
@@ -40,9 +38,7 @@ describe('DefinitionsService', () => {
       rows: [storedDefinition],
     });
 
-    await expect(
-      service.findOne('CO-45'),
-    ).resolves.toEqual(storedDefinition);
+    await expect(service.findOne('CO-45')).resolves.toEqual(storedDefinition);
 
     expect(queryMock).toHaveBeenCalledWith(
       expect.stringContaining('WHERE term = $1'),
@@ -55,9 +51,7 @@ describe('DefinitionsService', () => {
       rows: [],
     });
 
-    await expect(
-      service.findOne('UNKNOWN'),
-    ).resolves.toBeNull();
+    await expect(service.findOne('UNKNOWN')).resolves.toBeNull();
   });
 
   it('returns a copy of the database row', async () => {
