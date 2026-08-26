@@ -1,6 +1,6 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Project Outline - Specs for Ideal Competency Project
+## Original Project Outline - Specs for Ideal Competency Project (project scope has shifted since implementation)
 
 1. GitHub for apps to live
 
@@ -20,15 +20,12 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
     1. Tanstack Table
 
-    1. Tanstack query needed?
-
 1. Unit test - they are using jest with internal, could possibly look at vitest
 
 1. Back-end
 
-    1. DB: postgres, graphql, prisma
+    1. DB: postgres
 
     1. Nest.js
 
-1. Video demo talking about project
 
