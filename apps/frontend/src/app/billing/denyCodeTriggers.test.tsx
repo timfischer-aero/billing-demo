@@ -92,6 +92,62 @@ describe("deny-code modal triggers", () => {
     ).toBeDisabled();
   });
 
+  it("saves a changed comment when the textarea loses focus", async () => {
+    const user = userEvent.setup();
+    const updatedRecord = {
+      ...sampleRecords[0],
+      comment: "Corrected claim submitted.",
+      whoChanged: "u1",
+      dateChanged: "2026-08-26T12:00:00.000Z",
+    };
+    updateRecordMock.mockResolvedValue(updatedRecord);
+    const { onRecordUpdated } = renderDetailPanel(sampleRecords[0]);
+    const textarea = screen.getByRole("textbox");
+
+    await user.clear(textarea);
+    await user.type(textarea, "Corrected claim submitted.");
+    await user.tab();
+
+    expect(updateRecordMock).toHaveBeenCalledWith("r1", {
+      comment: "Corrected claim submitted.",
+      actorUserId: "u1",
+    });
+    await waitFor(() => {
+      expect(onRecordUpdated).toHaveBeenCalledWith(updatedRecord);
+    });
+    expect(textarea).toHaveValue("Corrected claim submitted.");
+  });
+
+  it("does not save an unchanged comment on blur", async () => {
+    const user = userEvent.setup();
+    renderDetailPanel(sampleRecords[0]);
+    const textarea = screen.getByRole("textbox");
+
+    await user.click(textarea);
+    await user.tab();
+
+    expect(updateRecordMock).not.toHaveBeenCalled();
+  });
+
+  it("restores the saved comment when updating it fails", async () => {
+    const user = userEvent.setup();
+    updateRecordMock.mockRejectedValue(
+      new Error("Unable to update record (503)."),
+    );
+    const { onRecordUpdated } = renderDetailPanel(sampleRecords[0]);
+    const textarea = screen.getByRole("textbox");
+
+    await user.clear(textarea);
+    await user.type(textarea, "This update will fail.");
+    await user.tab();
+
+    expect(
+      await screen.findByRole("alert"),
+    ).toHaveTextContent("Unable to update record (503).");
+    expect(textarea).toHaveValue(sampleRecords[0].comment);
+    expect(onRecordUpdated).not.toHaveBeenCalled();
+  });
+
   it("saves a selected denial code and reports the updated record", async () => {
     const user = userEvent.setup();
     const updatedRecord = {
