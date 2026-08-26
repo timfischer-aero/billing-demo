@@ -9,13 +9,23 @@ type TermDefinitionRow = TermDefinition & QueryResultRow;
 export class DefinitionsService {
   constructor(private readonly databaseService: DatabaseService) {}
 
+  async findAll(): Promise<TermDefinition[]> {
+    const result = await this.databaseService.query<TermDefinitionRow>(`
+      SELECT term, definition
+      FROM deny_code_definitions
+      ORDER BY term
+    `);
+
+    return result.rows.map((definition) => ({ ...definition }));
+  }
+
   async findOne(term: string): Promise<TermDefinition | null> {
     const result = await this.databaseService.query<TermDefinitionRow>(
       `
-          SELECT term, definition
-          FROM deny_code_definitions
-          WHERE term = $1
-        `,
+        SELECT term, definition
+        FROM deny_code_definitions
+        WHERE term = $1
+      `,
       [term],
     );
 

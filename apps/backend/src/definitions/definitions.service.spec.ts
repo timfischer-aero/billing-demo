@@ -28,6 +28,34 @@ describe('DefinitionsService', () => {
     expect(service).toBeDefined();
   });
 
+  it('returns all definitions ordered by term', async () => {
+    const storedDefinitions = [
+      { term: 'CO-45', definition: 'First test definition' },
+      { term: 'PR-1', definition: 'Second test definition' },
+    ];
+
+    queryMock.mockResolvedValue({ rows: storedDefinitions });
+
+    await expect(service.findAll()).resolves.toEqual(storedDefinitions);
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.stringContaining('ORDER BY term'),
+    );
+  });
+
+  it('returns copies of definition rows from findAll', async () => {
+    const storedDefinition = {
+      term: 'CO-45',
+      definition: 'Test definition',
+    };
+
+    queryMock.mockResolvedValue({ rows: [storedDefinition] });
+
+    const definitions = await service.findAll();
+
+    expect(definitions[0]).toEqual(storedDefinition);
+    expect(definitions[0]).not.toBe(storedDefinition);
+  });
+
   it('queries for the requested term', async () => {
     const storedDefinition = {
       term: 'CO-45',

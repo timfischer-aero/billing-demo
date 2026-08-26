@@ -5,9 +5,11 @@ import { DefinitionsService } from './definitions.service';
 
 describe('DefinitionsController', () => {
   let controller: DefinitionsController;
+  let findAllMock: jest.Mock;
   let findOneMock: jest.Mock;
 
   beforeEach(async () => {
+    findAllMock = jest.fn();
     findOneMock = jest.fn();
 
     const module: TestingModule = await Test.createTestingModule({
@@ -16,6 +18,7 @@ describe('DefinitionsController', () => {
         {
           provide: DefinitionsService,
           useValue: {
+            findAll: findAllMock,
             findOne: findOneMock,
           },
         },
@@ -27,6 +30,18 @@ describe('DefinitionsController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  it('returns all definitions', async () => {
+    const definitions = [
+      { term: 'CO-45', definition: 'First test definition' },
+      { term: 'PR-1', definition: 'Second test definition' },
+    ];
+
+    findAllMock.mockResolvedValue(definitions);
+
+    await expect(controller.findAll()).resolves.toEqual(definitions);
+    expect(findAllMock).toHaveBeenCalledTimes(1);
   });
 
   it('returns a known definition', async () => {

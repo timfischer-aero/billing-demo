@@ -6,6 +6,11 @@ import type { TermDefinition } from './term-definition.type';
 export class DefinitionsController {
   constructor(private readonly definitionsService: DefinitionsService) {}
 
+  @Get()
+  async findAll(): Promise<TermDefinition[]> {
+    return this.definitionsService.findAll();
+  }
+
   @Get(':term')
   async findOne(@Param('term') term: string): Promise<TermDefinition> {
     const definition = await this.definitionsService.findOne(term);

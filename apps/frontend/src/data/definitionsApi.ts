@@ -40,3 +40,28 @@ export async function fetchDefinition(
 
   return data;
 }
+
+export async function fetchDefinitions(
+  signal?: AbortSignal,
+): Promise<TermDefinition[]> {
+  const response = await fetch("/api/definitions", {
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Unable to load definitions (${response.status}).`,
+    );
+  }
+
+  const data: unknown = await response.json();
+
+  if (
+    !Array.isArray(data) ||
+    !data.every(isTermDefinition)
+  ) {
+    throw new Error("The definitions response was invalid.");
+  }
+
+  return data;
+}
