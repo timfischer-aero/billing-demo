@@ -148,6 +148,71 @@ describe("deny-code modal triggers", () => {
     expect(onRecordUpdated).not.toHaveBeenCalled();
   });
 
+  it("saves true when the Done checkbox is checked", async () => {
+    const user = userEvent.setup();
+    const updatedRecord = {
+      ...sampleRecords[0],
+      done: true,
+      whoChanged: "u1",
+      dateChanged: "2026-08-26T12:00:00.000Z",
+    };
+    updateRecordMock.mockResolvedValue(updatedRecord);
+    const { onRecordUpdated } = renderDetailPanel(sampleRecords[0]);
+    const checkbox = screen.getByRole("checkbox", { name: "Done" });
+
+    await user.click(checkbox);
+
+    expect(updateRecordMock).toHaveBeenCalledWith("r1", {
+      done: true,
+      actorUserId: "u1",
+    });
+    await waitFor(() => {
+      expect(onRecordUpdated).toHaveBeenCalledWith(updatedRecord);
+    });
+    expect(checkbox).toBeChecked();
+  });
+
+  it("saves false when the Done checkbox is unchecked", async () => {
+    const user = userEvent.setup();
+    const updatedRecord = {
+      ...sampleRecords[1],
+      done: false,
+      whoChanged: "u1",
+      dateChanged: "2026-08-26T12:00:00.000Z",
+    };
+    updateRecordMock.mockResolvedValue(updatedRecord);
+    const { onRecordUpdated } = renderDetailPanel(sampleRecords[1]);
+    const checkbox = screen.getByRole("checkbox", { name: "Done" });
+
+    await user.click(checkbox);
+
+    expect(updateRecordMock).toHaveBeenCalledWith("r2", {
+      done: false,
+      actorUserId: "u1",
+    });
+    await waitFor(() => {
+      expect(onRecordUpdated).toHaveBeenCalledWith(updatedRecord);
+    });
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it("restores the previous Done state when saving fails", async () => {
+    const user = userEvent.setup();
+    updateRecordMock.mockRejectedValue(
+      new Error("Unable to update record (503)."),
+    );
+    const { onRecordUpdated } = renderDetailPanel(sampleRecords[0]);
+    const checkbox = screen.getByRole("checkbox", { name: "Done" });
+
+    await user.click(checkbox);
+
+    expect(
+      await screen.findByRole("alert"),
+    ).toHaveTextContent("Unable to update record (503).");
+    expect(checkbox).not.toBeChecked();
+    expect(onRecordUpdated).not.toHaveBeenCalled();
+  });
+
   it("saves a selected denial code and reports the updated record", async () => {
     const user = userEvent.setup();
     const updatedRecord = {
