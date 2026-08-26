@@ -41,6 +41,7 @@ export default function DetailPanel({
 
   const [denyCode, setDenyCode] = useState(record.denyCode ?? "");
   const [comment, setComment] = useState(record.comment);
+  const [done, setDone] = useState(record.done);
   const [savedComment, setSavedComment] = useState(record.comment);
   const [savingField, setSavingField] = useState<SavingField>(null);
 
@@ -104,6 +105,40 @@ export default function DetailPanel({
         cause instanceof Error
           ? cause.message
           : "Unable to save the comment.",
+      );
+    } finally {
+      setSavingField(null);
+    }
+  }
+
+  async function handleDoneChange(nextDone: boolean) {
+    if (
+      nextDone === done ||
+      savingField !== null
+    ) {
+      return;
+    }
+
+    const previousDone = done;
+
+    setDone(nextDone);
+    setSavingField("done");
+    setSaveError(null);
+
+    try {
+      const updatedRecord = await updateRecord(record.id, {
+        done: nextDone,
+        actorUserId,
+      });
+
+      onRecordUpdated(updatedRecord);
+      setDone(updatedRecord.done);
+    } catch (cause: unknown) {
+      setDone(previousDone);
+      setSaveError(
+        cause instanceof Error
+          ? cause.message
+          : "Unable to save the Done status.",
       );
     } finally {
       setSavingField(null);
@@ -190,7 +225,15 @@ export default function DetailPanel({
 
       <div className="mb-4">
         <label className="flex items-center gap-2 text-sm text-gray-700">
-          <input type="checkbox" defaultChecked={record.done} className="h-4 w-4" />
+          <input
+            type="checkbox"
+            checked={done}
+            disabled={savingField !== null}
+            onChange={(event) => {
+              void handleDoneChange(event.target.checked);
+            }}
+            className="h-4 w-4 disabled:cursor-not-allowed"
+          />
           Done
         </label>
       </div>
