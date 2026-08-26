@@ -107,36 +107,73 @@ export default function UserPage() {
         )}
       </section>
 
-      {/* Clear saved settings */}
+      {/* Reset saved browser settings */}
       <section className="mt-10">
         <h2 className="text-lg font-medium">Reset</h2>
-        {selectedUser ? (
-          <>
-            <p className="mt-1 text-sm text-gray-500">
-              Clear the saved layout for {selectedUser.firstName}{" "}
-              {selectedUser.lastName}. Their view returns to the defaults next time
-              the worklist loads.
-            </p>
+
+        <div className="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200">
+          <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">
+                Saved layout
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Clear the active user&apos;s columns, sorting, and filters.
+              </p>
+            </div>
+
             <button
               type="button"
-              onClick={() => clearViewState()}
-              className="mt-3 rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+              disabled={selectedUser === null}
+              onClick={clearViewState}
+              className="shrink-0 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Clear saved settings
+              Clear layout
             </button>
+          </div>
+
+          <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">
+                Active user
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Forget the currently selected demo user.
+              </p>
+            </div>
+
             <button
               type="button"
+              disabled={selectedUser === null}
               onClick={() => setSelectedUserId(null)}
-              className="mt-3 rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+              className="shrink-0 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Clear saved user
+              Clear user
             </button>
-          </>
-        ) : (
-          <p className="mt-1 text-sm text-gray-400">
-            Select a user to manage their saved settings.
-          </p>
-        )}
+          </div>
+
+          <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">
+                All browser settings
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Clear the selected user and saved layouts for every demo user.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.clear();
+                window.location.reload();
+              }}
+              className="shrink-0 rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+            >
+              Clear everything
+            </button>
+          </div>
+        </div>
       </section>
     </div>
   );

@@ -25,9 +25,6 @@ export function getUserDisplayName(userID: string | null) : string {
   return whoChangedDisplay;
 }
 
-
-
-
 export const users: DemoUser[] = [
   { id: "u1", firstName: "Dana", lastName: "Whitfield" },
   { id: "u2", firstName: "Marcus", lastName: "Reyes" },
