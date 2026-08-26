@@ -131,7 +131,7 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
     enableHiding: true,
   },
   {
-    accessorKey: "whoChanged",
+    id: "whoChanged",
     accessorFn: (record) => getUserDisplayName(record.whoChanged),
     header: "Changed by",
     cell: (info) => info.getValue() as string,

@@ -52,6 +52,8 @@ export default function DetailPanel({
 
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const whoChangedText = getUserDisplayName(record.whoChanged) ||  "Not yet changed";
+
   async function handleDenyCodeChange(nextDenyCode: string) {
       if (nextDenyCode === denyCode || savingField !== null) {
         return;
@@ -266,10 +268,19 @@ export default function DetailPanel({
         </p>
         <div className="flex gap-6 text-xs text-gray-400">
           <span>
-            Changed by <span className="text-gray-600">{getUserDisplayName(record.whoChanged)}</span>
+            Changed by <span className="text-gray-600">{whoChangedText}</span>
           </span>
           <span>
-            Changed on <span className="text-gray-600">{record.dateChanged}</span>
+            Changed on {" "}
+            <span className="text-gray-600">
+              {record.dateChanged
+                ? new Date(record.dateChanged).toLocaleString("en-US", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                    timeZone: "America/New_York",
+                  })
+                : "Not yet changed"}
+            </span>
           </span>
         </div>
       </div>
