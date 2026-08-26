@@ -13,6 +13,21 @@ export function findUserById(
   return list.find((u) => u.id === id) ?? null;
 }
 
+export function getUserDisplayName(userID: string | null) : string {
+  const whoChangedUser = findUserById(userID);
+  const whoChangedDisplay =
+  userID === ""
+    ? ""
+    : whoChangedUser !== null
+      ? `${whoChangedUser.firstName} ${whoChangedUser.lastName}`
+      : `Unknown user (${userID})`;
+
+  return whoChangedDisplay;
+}
+
+
+
+
 export const users: DemoUser[] = [
   { id: "u1", firstName: "Dana", lastName: "Whitfield" },
   { id: "u2", firstName: "Marcus", lastName: "Reyes" },

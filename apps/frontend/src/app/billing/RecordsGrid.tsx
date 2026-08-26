@@ -17,6 +17,7 @@ import {
 } from "@tanstack/react-table";
 
 import ColumnsMenu from "./ColumnsMenu";
+import { getUserDisplayName } from "@/data/users";
 import { useDefinitionModal } from "@/context/DefinitionModalContext";
 
 //Type Imports
@@ -131,8 +132,9 @@ const columns: Array<ColumnDef<typeof features, DemoRecord>> = [
   },
   {
     accessorKey: "whoChanged",
+    accessorFn: (record) => getUserDisplayName(record.whoChanged),
     header: "Changed by",
-    cell: (info) => info.getValue(),
+    cell: (info) => info.getValue() as string,
     sortFn: 'alphanumeric',
     filterFn: 'includesString',
     size: 112,

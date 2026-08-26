@@ -1,11 +1,16 @@
 // src/app/billing/DetailPanel.tsx
 "use client"
 
-import type { DemoRecord } from "@/data/records";
-import { useDefinitionModal } from "@/context/DefinitionModalContext";
-import type { TermDefinition } from "@/data/denyCodes";
 import { useState } from "react";
+
+import { useDefinitionModal } from "@/context/DefinitionModalContext";
 import { updateRecord } from "@/data/recordsApi";
+import { getUserDisplayName } from "@/data/users";
+
+//Types
+import type { TermDefinition } from "@/data/denyCodes";
+import type { DemoRecord } from "@/data/records";
+
 
 type SavingField =
   | "comment"
@@ -261,7 +266,7 @@ export default function DetailPanel({
         </p>
         <div className="flex gap-6 text-xs text-gray-400">
           <span>
-            Changed by <span className="text-gray-600">{record.whoChanged}</span>
+            Changed by <span className="text-gray-600">{getUserDisplayName(record.whoChanged)}</span>
           </span>
           <span>
             Changed on <span className="text-gray-600">{record.dateChanged}</span>
