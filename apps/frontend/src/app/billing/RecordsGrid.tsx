@@ -168,6 +168,11 @@ export default function RecordsGrid({
     },
     
   });
+
+  //Counts for display of rows
+  const displayedRows = table.getRowModel().rows;
+  const displayedCount = displayedRows.length;
+  const totalCount = records.length;
   
   //Setup component states
   const columnFilters = useSelector(columnFiltersAtom);
@@ -178,7 +183,13 @@ export default function RecordsGrid({
     <section className="rounded-xl border border-gray-200 bg-white">
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
-        <span className="text-base font-medium text-gray-900">Records</span>
+        <div className="flex items-baseline gap-2">
+          <span className="text-base font-medium text-gray-900">Records</span>
+
+          <span aria-live="polite" className="text-xs text-gray-400">
+            Displaying {displayedCount} of {totalCount}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           <ColumnsMenu table={table}/>
           <button
@@ -270,7 +281,17 @@ export default function RecordsGrid({
           </thead>
 
           <tbody>
-            {table.getRowModel().rows.map((row) => {
+            {displayedRows.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={table.getVisibleLeafColumns().length}
+                  className="px-3 py-10 text-center text-sm text-gray-400"
+                >
+                  No records found
+                </td>
+              </tr>
+            ) : (
+              displayedRows.map((row) => {
               const isSelected = row.original.id === selectedId;
               return (
                 <tr
@@ -287,8 +308,9 @@ export default function RecordsGrid({
                     </td>
                   ))}
                 </tr>
-              );
-            })}
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
