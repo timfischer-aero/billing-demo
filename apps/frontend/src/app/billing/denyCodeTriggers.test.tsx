@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DefinitionModalProvider } from "@/context/DefinitionModalContext";
@@ -6,6 +6,7 @@ import { SelectedUserProvider } from "@/context/SelectedUserContext";
 import { ViewStateProvider } from "@/context/ViewStateContext";
 import type { TermDefinition } from "@/data/denyCodes";
 import { sampleRecords, type DemoRecord } from "@/data/records";
+import { updateRecord } from "@/data/recordsApi";
 import DefinitionModal from "./DefinitionModal";
 import DetailPanel from "./DetailPanel";
 import RecordsGrid from "./RecordsGrid";
@@ -17,23 +18,32 @@ vi.mock("@/data/definitionsApi", () => ({
   })),
 }));
 
+vi.mock("@/data/recordsApi", () => ({
+  updateRecord: vi.fn(),
+}));
+
+const updateRecordMock = vi.mocked(updateRecord);
+
 const definitions: TermDefinition[] = [
   { term: "CO-45", definition: "Definition for CO-45" },
   { term: "PR-1", definition: "Definition for PR-1" },
 ];
 
 function renderDetailPanel(record: DemoRecord) {
-  return render(
+  const onRecordUpdated = vi.fn();
+  const result = render(
     <DefinitionModalProvider>
       <DetailPanel
         record={record}
         definitions={definitions}
         actorUserId="u1"
-        onRecordUpdated={vi.fn()}
+        onRecordUpdated={onRecordUpdated}
       />
       <DefinitionModal />
     </DefinitionModalProvider>,
   );
+
+  return { ...result, onRecordUpdated };
 }
 
 function renderGrid(records: DemoRecord[], onSelectRow = vi.fn()) {
@@ -58,6 +68,7 @@ function renderGrid(records: DemoRecord[], onSelectRow = vi.fn()) {
 describe("deny-code modal triggers", () => {
   beforeEach(() => {
     localStorage.clear();
+    updateRecordMock.mockReset();
   });
 
   it("opens the selected record's definition from the detail panel", async () => {
@@ -79,6 +90,80 @@ describe("deny-code modal triggers", () => {
     expect(
       screen.getByRole("button", { name: "Deny code definition" }),
     ).toBeDisabled();
+  });
+
+  it("saves a selected denial code and reports the updated record", async () => {
+    const user = userEvent.setup();
+    const updatedRecord = {
+      ...sampleRecords[0],
+      denyCode: "PR-1",
+      whoChanged: "u1",
+      dateChanged: "2026-08-26T12:00:00.000Z",
+    };
+    updateRecordMock.mockResolvedValue(updatedRecord);
+    const { onRecordUpdated } = renderDetailPanel(sampleRecords[0]);
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Deny code" }),
+      "PR-1",
+    );
+
+    expect(updateRecordMock).toHaveBeenCalledWith("r1", {
+      denyCode: "PR-1",
+      actorUserId: "u1",
+    });
+    await waitFor(() => {
+      expect(onRecordUpdated).toHaveBeenCalledWith(updatedRecord);
+    });
+    expect(
+      screen.getByRole("combobox", { name: "Deny code" }),
+    ).toHaveValue("PR-1");
+  });
+
+  it("sends null when the denial code is cleared", async () => {
+    const user = userEvent.setup();
+    const updatedRecord = {
+      ...sampleRecords[0],
+      denyCode: null,
+      whoChanged: "u1",
+      dateChanged: "2026-08-26T12:00:00.000Z",
+    };
+    updateRecordMock.mockResolvedValue(updatedRecord);
+    const { onRecordUpdated } = renderDetailPanel(sampleRecords[0]);
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Deny code" }),
+      "",
+    );
+
+    expect(updateRecordMock).toHaveBeenCalledWith("r1", {
+      denyCode: null,
+      actorUserId: "u1",
+    });
+    await waitFor(() => {
+      expect(onRecordUpdated).toHaveBeenCalledWith(updatedRecord);
+    });
+  });
+
+  it("restores the previous denial code when saving fails", async () => {
+    const user = userEvent.setup();
+    updateRecordMock.mockRejectedValue(
+      new Error("Unable to update record (503)."),
+    );
+    const { onRecordUpdated } = renderDetailPanel(sampleRecords[0]);
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Deny code" }),
+      "PR-1",
+    );
+
+    expect(
+      await screen.findByRole("alert"),
+    ).toHaveTextContent("Unable to update record (503).");
+    expect(
+      screen.getByRole("combobox", { name: "Deny code" }),
+    ).toHaveValue("CO-45");
+    expect(onRecordUpdated).not.toHaveBeenCalled();
   });
 
   it("opens a definition from the grid without selecting its row", async () => {
