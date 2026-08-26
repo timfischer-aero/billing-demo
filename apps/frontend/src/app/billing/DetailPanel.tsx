@@ -7,6 +7,12 @@ import type { TermDefinition } from "@/data/denyCodes";
 import { useState } from "react";
 import { updateRecord } from "@/data/recordsApi";
 
+type SavingField =
+  | "comment"
+  | "denyCode"
+  | "done"
+  | null;
+
 type DetailPanelProps = {
   record: DemoRecord;
   definitions: TermDefinition[];
@@ -33,44 +39,74 @@ export default function DetailPanel({
 }: DetailPanelProps) {
   const { openDefinition } = useDefinitionModal();
 
-  const [denyCode, setDenyCode] = useState(
-    record.denyCode ?? "",
-  );
-  const [isSavingDenyCode, setIsSavingDenyCode] =
-    useState(false);
-  const [saveError, setSaveError] = useState<string | null>(
-    null,
-  );
+  const [denyCode, setDenyCode] = useState(record.denyCode ?? "");
+  const [comment, setComment] = useState(record.comment);
+  const [savedComment, setSavedComment] = useState(record.comment);
+  const [savingField, setSavingField] = useState<SavingField>(null);
+
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   async function handleDenyCodeChange(nextDenyCode: string) {
-    if (nextDenyCode === denyCode) {
+      if (nextDenyCode === denyCode || savingField !== null) {
+        return;
+      }
+
+      const previousDenyCode = denyCode;
+
+      setDenyCode(nextDenyCode);
+      setSavingField("denyCode");
+      setSaveError(null);
+
+      try {
+        const updatedRecord = await updateRecord(record.id, {
+          denyCode:
+            nextDenyCode === "" ? null : nextDenyCode,
+          actorUserId,
+        });
+
+        onRecordUpdated(updatedRecord);
+        setDenyCode(updatedRecord.denyCode ?? "");
+      } catch (cause: unknown) {
+        setDenyCode(previousDenyCode);
+        setSaveError(
+          cause instanceof Error
+            ? cause.message
+            : "Unable to save the denial code.",
+        );
+      } finally {
+        setSavingField(null);
+      }
+  }
+
+  async function handleCommentBlur() {
+    if (
+      comment === savedComment ||
+      savingField !== null
+    ) {
       return;
     }
 
-    const previousDenyCode = denyCode;
-
-    setDenyCode(nextDenyCode);
-    setIsSavingDenyCode(true);
+    setSavingField("comment");
     setSaveError(null);
 
     try {
       const updatedRecord = await updateRecord(record.id, {
-        denyCode:
-          nextDenyCode === "" ? null : nextDenyCode,
+        comment,
         actorUserId,
       });
 
       onRecordUpdated(updatedRecord);
-      setDenyCode(updatedRecord.denyCode ?? "");
+      setComment(updatedRecord.comment);
+      setSavedComment(updatedRecord.comment);
     } catch (cause: unknown) {
-      setDenyCode(previousDenyCode);
+      setComment(savedComment);
       setSaveError(
         cause instanceof Error
           ? cause.message
-          : "Unable to save the denial code.",
+          : "Unable to save the comment.",
       );
     } finally {
-      setIsSavingDenyCode(false);
+      setSavingField(null);
     }
   }
 
@@ -99,10 +135,17 @@ export default function DetailPanel({
         <div className="sm:col-span-2">
           <label className="mb-1 block text-xs text-gray-500">Comment</label>
           <textarea
-            defaultValue={record.comment}
+            value={comment}
+            disabled={savingField !== null}
+            onChange={(event) => {
+              setComment(event.target.value);
+            }}
+            onBlur={() => {
+              void handleCommentBlur();
+            }}
             rows={2}
             maxLength={255}
-            className="w-full resize-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-gray-500 focus:outline-none"
+            className="w-full resize-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-gray-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100"
           />
         </div>
         <div>
@@ -111,7 +154,7 @@ export default function DetailPanel({
             <select
               id="deny-code"
               value={denyCode}
-              disabled={isSavingDenyCode}
+              disabled={savingField !== null}
               onChange={(event) => {
                 void handleDenyCodeChange(event.target.value);
               }}
@@ -142,17 +185,6 @@ export default function DetailPanel({
               <span aria-hidden className="text-sm font-medium">i</span>
             </button>
           </div>
-          {isSavingDenyCode ? (
-            <p className="mt-1 text-xs text-gray-500">
-              Saving…
-            </p>
-          ) : null}
-
-          {saveError !== null ? (
-            <p role="alert" className="mt-1 text-xs text-red-600">
-              {saveError}
-            </p>
-          ) : null}
         </div>
       </div>
 
@@ -162,6 +194,17 @@ export default function DetailPanel({
           Done
         </label>
       </div>
+      {savingField !== null ? (
+        <p aria-live="polite" className="text-xs text-gray-500">
+          Saving changes…
+        </p>
+      ) : null}
+
+      {saveError !== null ? (
+        <p role="alert" className="text-xs text-red-600">
+          {saveError}
+        </p>
+      ) : null}
 
       {/* Group 3 — System audit (locked, muted) */}
       <div className="border-t border-gray-100 pt-3">
