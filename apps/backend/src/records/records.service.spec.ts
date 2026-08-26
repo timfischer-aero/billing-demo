@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseService } from '../database/database.service';
 import type { BillingRecord } from './record.type';
@@ -88,5 +89,114 @@ describe('RecordsService', () => {
 
     expect(records[0]).toEqual(storedRecord);
     expect(records[0]).not.toBe(storedRecord);
+  });
+
+  it('updates a comment with parameterized values and audit fields', async () => {
+    const updatedRecord: BillingRecord = {
+      id: 'r1',
+      patientNumber: 'P-0049217',
+      dos: '03/14/2026',
+      payer: 'Blue Ridge Mutual',
+      comment: 'Corrected claim submitted.',
+      denyCode: 'CO-45',
+      done: false,
+      whoChanged: 'user-1',
+      dateChanged: '2026-08-25T12:00:00.000Z',
+    };
+    queryMock.mockResolvedValue({ rows: [updatedRecord] });
+
+    const result = await service.update(
+      'r1',
+      { comment: 'Corrected claim submitted.' },
+      'user-1',
+    );
+
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'SET comment = $1, who_changed = $2, date_changed = $3',
+      ),
+      [
+        'Corrected claim submitted.',
+        'user-1',
+        expect.any(String),
+        'r1',
+      ],
+    );
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE id = $4'),
+      expect.any(Array),
+    );
+    expect(result).toEqual(updatedRecord);
+    expect(result).not.toBe(updatedRecord);
+  });
+
+  it('preserves false when updating the done field', async () => {
+    queryMock.mockResolvedValue({ rows: [] });
+
+    await service.update('r1', { done: false }, 'user-1');
+
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.stringContaining('done = $1'),
+      [false, 'user-1', expect.any(String), 'r1'],
+    );
+  });
+
+  it('allows the denial code to be cleared with null', async () => {
+    queryMock.mockResolvedValue({ rows: [] });
+
+    await service.update('r1', { denyCode: null }, 'user-1');
+
+    expect(queryMock).toHaveBeenCalledTimes(1);
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.stringContaining('deny_code = $1'),
+      [null, 'user-1', expect.any(String), 'r1'],
+    );
+  });
+
+  it('checks that a supplied denial code exists before updating', async () => {
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ term: 'CO-97' }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    await service.update('r1', { denyCode: 'CO-97' }, 'user-1');
+
+    expect(queryMock).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('FROM deny_code_definitions'),
+      ['CO-97'],
+    );
+    expect(queryMock).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('deny_code = $1'),
+      ['CO-97', 'user-1', expect.any(String), 'r1'],
+    );
+  });
+
+  it('rejects an unknown denial code without updating the record', async () => {
+    queryMock.mockResolvedValue({ rows: [] });
+
+    await expect(
+      service.update('r1', { denyCode: 'UNKNOWN' }, 'user-1'),
+    ).rejects.toThrow(BadRequestException);
+    expect(queryMock).toHaveBeenCalledTimes(1);
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.stringContaining('FROM deny_code_definitions'),
+      ['UNKNOWN'],
+    );
+  });
+
+  it('rejects an update without editable fields', async () => {
+    await expect(service.update('r1', {}, 'user-1')).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+
+  it('returns null when the record ID does not exist', async () => {
+    queryMock.mockResolvedValue({ rows: [] });
+
+    await expect(
+      service.update('missing', { comment: 'Update' }, 'user-1'),
+    ).resolves.toBeNull();
   });
 });

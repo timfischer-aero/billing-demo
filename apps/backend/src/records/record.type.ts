@@ -9,3 +9,9 @@ export type BillingRecord = {
   whoChanged: string;
   dateChanged: string;
 };
+
+export type EditableRecordChanges = {
+  comment?: string;
+  denyCode?: string | null;
+  done?: boolean;
+};
