@@ -149,7 +149,18 @@ export default function DetailPanel({
     <section className="rounded-xl border border-gray-200 bg-white p-4">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-base font-medium text-gray-900">Record detail</h2>
-        <span className="text-xs text-gray-400">editing · commits on blur</span>
+        <div className="flex items-center gap-3 text-xs">
+          <span
+            aria-live="polite"
+            className={[
+              "min-w-16 text-right text-blue-600",
+              savingField === null ? "invisible" : "",
+            ].join(" ")}
+          >
+            Saving…
+          </span>
+          <span className="text-xs text-gray-400">editing · commits on blur</span>
+        </div>
       </div>
 
       {/* Group 1 — Claim identity (locked) */}
@@ -237,12 +248,6 @@ export default function DetailPanel({
           Done
         </label>
       </div>
-      {savingField !== null ? (
-        <p aria-live="polite" className="text-xs text-gray-500">
-          Saving changes…
-        </p>
-      ) : null}
-
       {saveError !== null ? (
         <p role="alert" className="text-xs text-red-600">
           {saveError}
