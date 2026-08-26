@@ -3,9 +3,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { RecordsModule } from './records/records.module';
 import { DefinitionsModule } from './definitions/definitions.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [RecordsModule, DefinitionsModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    RecordsModule, DefinitionsModule],
   controllers: [AppController],
   providers: [AppService],
 })
