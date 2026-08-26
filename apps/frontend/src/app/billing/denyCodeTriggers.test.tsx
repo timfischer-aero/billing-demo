@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DefinitionModalProvider } from "@/context/DefinitionModalContext";
 import { SelectedUserProvider } from "@/context/SelectedUserContext";
 import { ViewStateProvider } from "@/context/ViewStateContext";
+import type { TermDefinition } from "@/data/denyCodes";
 import { sampleRecords, type DemoRecord } from "@/data/records";
 import DefinitionModal from "./DefinitionModal";
 import DetailPanel from "./DetailPanel";
@@ -16,10 +17,20 @@ vi.mock("@/data/definitionsApi", () => ({
   })),
 }));
 
+const definitions: TermDefinition[] = [
+  { term: "CO-45", definition: "Definition for CO-45" },
+  { term: "PR-1", definition: "Definition for PR-1" },
+];
+
 function renderDetailPanel(record: DemoRecord) {
   return render(
     <DefinitionModalProvider>
-      <DetailPanel record={record} />
+      <DetailPanel
+        record={record}
+        definitions={definitions}
+        actorUserId="u1"
+        onRecordUpdated={vi.fn()}
+      />
       <DefinitionModal />
     </DefinitionModalProvider>,
   );

@@ -3,6 +3,16 @@
 
 import type { DemoRecord } from "@/data/records";
 import { useDefinitionModal } from "@/context/DefinitionModalContext";
+import type { TermDefinition } from "@/data/denyCodes";
+import { useState } from "react";
+import { updateRecord } from "@/data/recordsApi";
+
+type DetailPanelProps = {
+  record: DemoRecord;
+  definitions: TermDefinition[];
+  actorUserId: string;
+  onRecordUpdated: (updatedRecord: DemoRecord) => void;
+};
 
 function LockedField({ label, value }: { label: string; value: string }) {
   return (
@@ -15,8 +25,54 @@ function LockedField({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function DetailPanel({ record }: { record: DemoRecord }) {
+export default function DetailPanel({
+  record,
+  definitions,
+  actorUserId,
+  onRecordUpdated,
+}: DetailPanelProps) {
   const { openDefinition } = useDefinitionModal();
+
+  const [denyCode, setDenyCode] = useState(
+    record.denyCode ?? "",
+  );
+  const [isSavingDenyCode, setIsSavingDenyCode] =
+    useState(false);
+  const [saveError, setSaveError] = useState<string | null>(
+    null,
+  );
+
+  async function handleDenyCodeChange(nextDenyCode: string) {
+    if (nextDenyCode === denyCode) {
+      return;
+    }
+
+    const previousDenyCode = denyCode;
+
+    setDenyCode(nextDenyCode);
+    setIsSavingDenyCode(true);
+    setSaveError(null);
+
+    try {
+      const updatedRecord = await updateRecord(record.id, {
+        denyCode:
+          nextDenyCode === "" ? null : nextDenyCode,
+        actorUserId,
+      });
+
+      onRecordUpdated(updatedRecord);
+      setDenyCode(updatedRecord.denyCode ?? "");
+    } catch (cause: unknown) {
+      setDenyCode(previousDenyCode);
+      setSaveError(
+        cause instanceof Error
+          ? cause.message
+          : "Unable to save the denial code.",
+      );
+    } finally {
+      setIsSavingDenyCode(false);
+    }
+  }
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-4">
@@ -50,26 +106,53 @@ export default function DetailPanel({ record }: { record: DemoRecord }) {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-gray-500">Deny code</label>
+          <label htmlFor="deny-code" className="mb-1 block text-xs text-gray-500">Deny code</label>
           <div className="flex items-center gap-1">
-            <input
-              defaultValue={record.denyCode ?? ""}
-              className="h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-gray-500 focus:outline-none"
-            />
+            <select
+              id="deny-code"
+              value={denyCode}
+              disabled={isSavingDenyCode}
+              onChange={(event) => {
+                void handleDenyCodeChange(event.target.value);
+              }}
+              className="h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-gray-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100"
+            >
+              <option value="">No denial code</option>
+
+              {definitions.map((definition) => (
+                <option
+                  key={definition.term}
+                  value={definition.term}
+                >
+                  {definition.term}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               aria-label="Deny code definition"
-              disabled={record.denyCode === null}
+              disabled={denyCode === ""}
               onClick={() => {
-                if (record.denyCode !== null) {
-                  openDefinition(record.denyCode);
+                if (denyCode !== "") {
+                  openDefinition(denyCode);
                 }
               }}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200 text-blue-600 hover:bg-gray-50"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200 text-blue-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-300"
             >
               <span aria-hidden className="text-sm font-medium">i</span>
             </button>
           </div>
+          {isSavingDenyCode ? (
+            <p className="mt-1 text-xs text-gray-500">
+              Saving…
+            </p>
+          ) : null}
+
+          {saveError !== null ? (
+            <p role="alert" className="mt-1 text-xs text-red-600">
+              {saveError}
+            </p>
+          ) : null}
         </div>
       </div>
 

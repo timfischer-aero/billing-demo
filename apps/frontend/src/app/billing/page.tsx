@@ -1,21 +1,30 @@
 // src/app/billing/page.tsx
 "use client";
 
+//Packages
 import { useEffect, useState} from "react";
 import Link from "next/link";
 
+//Components
 import DetailPanel from "./DetailPanel";
 import RecordsGrid from "./RecordsGrid";
+import DefinitionModal  from "./DefinitionModal";
 
-import type { DemoRecord } from "@/data/records";
+//API
+import { fetchDefinitions } from "@/data/definitionsApi";
 import { getRecords } from "@/data/recordsApi";
 
+//Types
+import type { TermDefinition } from "@/data/denyCodes";
+import type { DemoRecord } from "@/data/records";
+
+//Context Imports
 import { useSelectedUser } from "@/context/SelectedUserContext";
 import { DefinitionModalProvider } from "@/context/DefinitionModalContext";
-import DefinitionModal  from "./DefinitionModal";
 
 export default function BillingPage() {
   const [records, setRecords] = useState<DemoRecord[]>([]);
+  const [definitions, setDefinitions] = useState<TermDefinition[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,9 +32,19 @@ export default function BillingPage() {
   const selected =
     records.find((record) => record.id === selectedId) ?? null;
 
+  function handleRecordUpdated(updatedRecord: DemoRecord) {
+    setRecords((currentRecords) =>
+      currentRecords.map((record) =>
+        record.id === updatedRecord.id
+          ? updatedRecord
+          : record,
+      ),
+    );
+  }
+
   const { selectedUserId } = useSelectedUser();
 
-
+  //Pull records on selectedUserId updates
   useEffect(() => {
     if (selectedUserId === null) {
       return;
@@ -33,9 +52,16 @@ export default function BillingPage() {
 
     const controller = new AbortController();
 
-    getRecords(controller.signal)
-      .then((loadedRecords) => {
+    setIsLoading(true);
+    setError(null);
+
+    Promise.all([
+      getRecords(controller.signal),
+      fetchDefinitions(controller.signal),
+    ])
+      .then(([loadedRecords, loadedDefinitions]) => {
         setRecords(loadedRecords);
+        setDefinitions(loadedDefinitions);
 
         setSelectedId((currentId) => {
           const currentRecordStillExists = loadedRecords.some(
@@ -57,7 +83,7 @@ export default function BillingPage() {
         setError(
           cause instanceof Error
             ? cause.message
-            : "An unexpected error occurred while loading records.",
+            : "An unexpected error occurred while loading billing data.",
         );
       })
       .finally(() => {
@@ -102,7 +128,7 @@ export default function BillingPage() {
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 p-10 text-center">
         <h2 className="font-medium text-red-900">
-          Unable to load billing records
+          Unable to load billing data
         </h2>
         <p className="mt-1 text-sm text-red-700">{error}</p>
       </div>
@@ -113,7 +139,13 @@ export default function BillingPage() {
     <DefinitionModalProvider>
       <div className="flex flex-col gap-4">
         {selected ? (
-          <DetailPanel record={selected} />
+          <DetailPanel
+            key={selected.id}
+            record={selected}
+            definitions={definitions}
+            actorUserId={selectedUserId}
+            onRecordUpdated={handleRecordUpdated}
+          />
         ) : (
           <section className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-400">
             Select a record to get started
